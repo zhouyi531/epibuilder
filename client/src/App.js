@@ -8,7 +8,6 @@ import logo from "./logo.svg";
 import "./App.css";
 import axios from "axios";
 import config from "./config";
-import CenteredGrid from "./grid";
 import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
 import Input from "@material-ui/core/Input";

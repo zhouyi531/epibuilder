@@ -10,6 +10,7 @@ const moment = require("moment");
 const Promise = require("bluebird");
 const epiTemplatesLoader = require("./lib/epiTemplatesLoader");
 const { parseMustache } = require("./lib/mustacheParser");
+const { parseSQL } = require("./lib/sqlParser");
 
 const app = express();
 
@@ -77,7 +78,9 @@ app.get("/fileContent", async (req, res) => {
 
   res.status(200).json({
     content: content,
-    params: parseMustache(content),
+    params: fileName.toLowerCase().includes(".mustache")
+      ? parseMustache(content)
+      : parseSQL(content),
     path: absolutePath.split("epiquery-templates")[1]
   });
 });
