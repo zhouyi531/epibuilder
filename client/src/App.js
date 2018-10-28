@@ -306,7 +306,7 @@ class App extends Component {
             <Grid item xs={12}>
               <Paper
                 className={classes.paper}
-                style={{ height: "100px", overflowY: "scroll" }}
+                style={{ height: "10px", overflowY: "scroll" }}
               >
                 <span>
                   {this.state.currentFilePath && (
@@ -316,7 +316,7 @@ class App extends Component {
                       }`}
                       target="_blank"
                     >
-                      View souorce code on github
+                      View [{this.state.currentFilePath}] on github
                     </a>
                   )}
                 </span>
