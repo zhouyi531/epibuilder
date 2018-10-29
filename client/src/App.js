@@ -120,6 +120,38 @@ class ChildItem extends Component {
   }
 }
 
+class JsonPanel extends Component {
+  constructor(props) {
+    super(props);
+  }
+  componentDidMount() {
+    this.runCodePrettify();
+  }
+
+  runCodePrettify() {
+    let script = document.createElement("script");
+    script.type = "text/javascript";
+    script.async = true;
+
+    script.src =
+      "https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js";
+    (
+      document.getElementsByTagName("head")[0] ||
+      document.getElementsByTagName("body")[0]
+    ).appendChild(script);
+  }
+  render() {
+    return (
+      <pre
+        className="prettyprint lang-js"
+        style={{ border: "none!important;" }}
+      >
+        {JSON.stringify(this.props.JSONContent, null, "\t")}
+      </pre>
+    );
+  }
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -161,13 +193,13 @@ class App extends Component {
     const invocationUrl = `${config.epiQueryServer}${
       this.state.currentFilePath
     }`;
+    let callResult = (await axios.post(
+      invocationUrl,
+      this.state.currentParamObj
+    )).data;
+    console.log("epiquery call result", callResult);
     try {
-      await this.setState({
-        currentResult: (await axios.post(
-          invocationUrl,
-          this.state.currentParamObj
-        )).data
-      });
+      await this.setState({ currentResult: callResult });
     } catch (err) {
       console.log(err);
     }
@@ -302,7 +334,7 @@ class App extends Component {
               />
             </div>
           </Grid>
-          <Grid item xs={6}>
+          <Grid item xs={4}>
             <Grid item xs={12}>
               <Paper
                 className={classes.paper}
@@ -346,14 +378,23 @@ class App extends Component {
               </Paper>
             </Grid>
           </Grid>
-          <Grid item xs={2}>
+          <Grid item xs={4}>
+            <Paper
+              className={classes.paper}
+              style={{ height: "200px", overflowY: "scroll" }}
+            >
+              <h2>Parameters</h2>
+              {this.state.currentParamObj && (
+                <JsonPanel JSONContent={this.state.currentParamObj} />
+              )}
+            </Paper>
             <Paper
               className={classes.paper}
               style={{ height: "800px", overflowY: "scroll" }}
             >
               <h2>Result</h2>
               {this.state.currentResult && (
-                <span>{this.state.currentResult}</span>
+                <JsonPanel JSONContent={this.state.currentResult} />
               )}
             </Paper>
           </Grid>
