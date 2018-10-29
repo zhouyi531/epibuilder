@@ -65,3 +65,5 @@ build/
 
 #vs folder
 .vscode
+
+local.env

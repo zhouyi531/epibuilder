@@ -190,14 +190,11 @@ class App extends Component {
   };
 
   doQuery = async () => {
-    const invocationUrl = `${config.epiQueryServer}${
-      this.state.currentFilePath
-    }`;
-    let callResult = (await axios.post(
-      invocationUrl,
-      this.state.currentParamObj
-    )).data;
-    console.log("epiquery call result", callResult);
+    const invocationUrl = `${config.serverBaseUrl}epicall`;
+    let callResult = (await axios.post(invocationUrl, {
+      fileName: this.state.currentFilePath,
+      params: this.state.currentParamObj
+    })).data;
     try {
       await this.setState({ currentResult: callResult });
     } catch (err) {

@@ -13,7 +13,7 @@ module.exports = {
     ? "./"
     : `http://localhost:${process.env.PORT || 8080}/`,
   epiQueryServer:
-    process.env.EPIQUERY_SERVER || "http://127.0.0.1:9090/epiquery1/glglive",
+    process.env.EPIQUERY_SERVER || "http://127.0.0.1:9090/epiquery1/datahub",
   localEpiTemplateFolder:
     process.env.TEMPLATE_DIRECTORY ||
     "/Users/austinzhou/Code/github/glg/epiquery-templates"

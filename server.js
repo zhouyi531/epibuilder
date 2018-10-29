@@ -85,6 +85,30 @@ app.get("/fileContent", async (req, res) => {
   });
 });
 
+app.post("/epicall", async (req, res, next) => {
+  const fileName = req.body["fileName"];
+  const params = req.body["params"];
+
+  console.log(`${config.epiQueryServer}${fileName}`);
+  console.log(params);
+
+  try {
+    const result = await axios.post(
+      `${config.epiQueryServer}${fileName}`,
+      params ? params : {}
+    ).data;
+    console.log(result);
+    if(!result){
+      next(new Error("epi call failed"));
+    }
+    res.status(200).send(result);
+  } catch (err) {
+    if (err) {
+      next(err);
+    }
+  }
+});
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname + "/client/build/index.html"));
 });
