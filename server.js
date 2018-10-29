@@ -93,12 +93,11 @@ app.post("/epicall", async (req, res, next) => {
   console.log(params);
 
   try {
-    const result = await axios.post(
+    const result = (await axios.post(
       `${config.epiQueryServer}${fileName}`,
-      params ? params : {}
-    ).data;
-    console.log(result);
-    if(!result){
+      params
+    )).data;
+    if (!result) {
       next(new Error("epi call failed"));
     }
     res.status(200).send(result);
