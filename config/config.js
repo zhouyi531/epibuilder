@@ -15,6 +15,6 @@ module.exports = {
   epiQueryServer:
     process.env.EPIQUERY_SERVER || "http://127.0.0.1:9090/epiquery1/glglive",
   localEpiTemplateFolder:
-    process.env.TEMPLATE_FOLDER ||
+    process.env.TEMPLATE_DIRECTORY ||
     "/Users/austinzhou/Code/github/glg/epiquery-templates"
 };
