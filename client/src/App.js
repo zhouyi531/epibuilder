@@ -251,15 +251,23 @@ class App extends Component {
                             variant="outlined"
                             onChange={event => {
                               const source = event.target;
-                              if(this.timer){
+                              if (this.timer) {
                                 clearTimeout(this.timer);
                               }
-                              
+
                               this.timer = setTimeout(async () => {
                                 currentObj[key][index] = source.value;
-                                await this.setState({currentParamObj:this.state.currentParamObj});
+                                await this.setState({
+                                  currentParamObj: this.state.currentParamObj
+                                });
                               }, 500);
-                              
+                            }}
+                            onMouseLeave={event => {
+                              if (this.timer) {
+                                clearTimeout(this.timer);
+                              }
+                              const source = event.target;
+                              currentObj[key][index] = source.value;
                             }}
                           />
                         </li>
@@ -306,9 +314,17 @@ class App extends Component {
 
                     this.timer = setTimeout(async () => {
                       currentObj[key] = source.value;
-                      await this.setState({ currentParamObj: this.state.currentParamObj });
+                      await this.setState({
+                        currentParamObj: this.state.currentParamObj
+                      });
                     }, 500);
-
+                  }}
+                  onMouseLeave={event => {
+                    if (this.timer) {
+                      clearTimeout(this.timer);
+                    }
+                    const source = event.target;
+                    currentObj[key] = source.value;
                   }}
                 />
               </li>
