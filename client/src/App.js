@@ -161,6 +161,7 @@ class App extends Component {
       fileTree: {},
       currentParamObj: null
     };
+    this.timer = null;
   }
 
   componentDidMount = async () => {
@@ -181,15 +182,18 @@ class App extends Component {
       `${config.serverBaseUrl}fileContent?fileName=${fileName}`
     )).data;
 
+    await this.setState({ currentParamObj: null });
     await this.setState({
       currentFilePath: path,
       currentContent: content.replace(/(?:\r\n|\r|\n)/g, "<br/>") || "",
-      currentParamObj: params || {}
+      currentParamObj: params || {},
+      currentResult: null
     });
     console.log(this.state.currentFilePath);
   };
 
   doQuery = async () => {
+    await this.setState({ currentParamObj: this.state.currentParamObj });
     const invocationUrl = `${config.serverBaseUrl}epicall`;
     let callResult = (await axios.post(invocationUrl, {
       fileName: this.state.currentFilePath,
@@ -245,16 +249,17 @@ class App extends Component {
                             name={key}
                             margin="normal"
                             variant="outlined"
-                            onChange={async event => {
+                            onChange={event => {
                               const source = event.target;
-                              const timeoutHandler = setTimeout(async () => {
-                                if (item === source.value) {
-                                  clearTimeout(timeoutHandler);
-                                  return;
-                                }
+                              if(this.timer){
+                                clearTimeout(this.timer);
+                              }
+                              
+                              this.timer = setTimeout(async () => {
                                 currentObj[key][index] = source.value;
-                                console.log(this.state.currentParamObj);
-                              }, 1000);
+                                await this.setState({currentParamObj:this.state.currentParamObj});
+                              }, 500);
+                              
                             }}
                           />
                         </li>
@@ -295,14 +300,15 @@ class App extends Component {
                   variant="outlined"
                   onChange={event => {
                     const source = event.target;
-                    const timeoutHandler = setTimeout(() => {
-                      if (currentObj[key] === source.value) {
-                        clearTimeout(timeoutHandler);
-                        return;
-                      }
+                    if (this.timer) {
+                      clearTimeout(this.timer);
+                    }
+
+                    this.timer = setTimeout(async () => {
                       currentObj[key] = source.value;
-                      console.log(this.state.currentParamObj);
-                    }, 1000);
+                      await this.setState({ currentParamObj: this.state.currentParamObj });
+                    }, 500);
+
                   }}
                 />
               </li>
