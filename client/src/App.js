@@ -270,6 +270,15 @@ class App extends Component {
                               currentObj[key][index] = source.value;
                             }}
                           />
+                          <a href="#" onClick={async ()=>{
+                            if (this.timer) {
+                              clearTimeout(this.timer);
+                            }
+                            currentObj[key].splice(index, 1);
+                            await this.setState({
+                              currentParamObj: this.state.currentParamObj
+                            });
+                          }}>[x]</a>
                         </li>
                       );
                     })}
