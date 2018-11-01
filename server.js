@@ -98,7 +98,7 @@ app.post("/epicall", async (req, res, next) => {
       params
     )).data;
     if (!result) {
-      next(new Error("epi call failed"));
+      throw new Error("no result");
     }
     res.status(200).send(result);
   } catch (err) {
@@ -114,9 +114,8 @@ app.get("/", (req, res) => {
 
 app.use(function(err, req, res, next) {
   if (err) {
-    console.log(err);
     if (!res.headersSent) {
-      res.status(500).send(err.message);
+      res.status(200).json({ status: "err", msg: err.message });
     }
   }
 

@@ -10,8 +10,11 @@ import axios from "axios";
 import config from "./config";
 import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
-import Input from "@material-ui/core/Input";
 import TextField from "@material-ui/core/TextField";
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import Mustache from "mustache";
+import FolderIcon from "@material-ui/icons/FolderOutlined";
+import ListIcon from "@material-ui/icons/ListOutlined";
 
 const theme = createMuiTheme();
 
@@ -42,8 +45,6 @@ const styles = theme => ({
     margin: theme.spacing.unit
   }
 });
-
-const prefixArray = [];
 
 function renderHTML(rawHTML) {
   return React.createElement("div", {
@@ -82,14 +83,60 @@ class ParentItem extends Component {
 class ChildItem extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      submenuClass: "submenuHidden"
+    };
   }
 
   render() {
+    const { classes } = this.props;
+    console.log(classes);
     return (
-      <ul className="submenu">
-        <li>
-          {this.props.type === "file" && (
-            <span>
+      <div>
+        {this.props.type === "directory" && (
+          <div>
+            <span style={{ verticalAlign: "baseline" }}>
+              <FolderIcon />
+              <a
+                href="#"
+                onClick={async () => {
+                  if (this.state.submenuClass === "submenuHidden") {
+                    await this.setState({ submenuClass: "submenuShown" });
+                  } else {
+                    await this.setState({ submenuClass: "submenuHidden" });
+                  }
+                }}
+              >
+                {this.props.name}
+              </a>
+            </span>
+            {this.props.children &&
+              this.props.children.map(child => {
+                return (
+                  <ul
+                    className={
+                      this.props.firstLayer
+                        ? "submenuShown"
+                        : this.state.submenuClass
+                    }
+                  >
+                    <ChildItem
+                      path={child.path}
+                      name={child.name}
+                      children={child.children}
+                      type={child.type}
+                      onClick={this.props.onClick}
+                    />
+                  </ul>
+                );
+              })}
+          </div>
+        )}
+
+        {this.props.type === "file" && (
+          <li>
+            <span style={{ verticalAlign: "baseline" }}>
+              <ListIcon />
               <a
                 href="#"
                 onClick={async () => {
@@ -99,23 +146,9 @@ class ChildItem extends Component {
                 {this.props.name}
               </a>
             </span>
-          )}
-          {this.props.type === "directory" && <span>{this.props.name}</span>}
-
-          {this.props.children &&
-            this.props.children.map(child => {
-              return (
-                <ChildItem
-                  path={child.path}
-                  name={child.name}
-                  children={child.children}
-                  type={child.type}
-                  onClick={this.props.onClick}
-                />
-              );
-            })}
-        </li>
-      </ul>
+          </li>
+        )}
+      </div>
     );
   }
 }
@@ -159,7 +192,12 @@ class App extends Component {
     this.state = {
       diagnostic: {},
       fileTree: {},
-      currentParamObj: null
+      currentParamObj: null,
+      currentFilePath: null,
+      currentRawTemplate: null,
+      currentTemplateContent: null,
+      currentParamObj: null,
+      currentResult: null
     };
     this.timer = null;
   }
@@ -170,14 +208,12 @@ class App extends Component {
         `${config.serverBaseUrl}fileTreeData`
       )).data;
       await this.setState({ fileTree: fileTreeData });
-
-      console.log(`fetch data at ${new Date()}`);
     } catch (err) {
       console.log("error in 'componentDidMount':", err);
     }
   };
 
-  handleClick = async fileName => {
+  handleClickTemplateName = async fileName => {
     const { content, path, params } = (await axios.get(
       `${config.serverBaseUrl}fileContent?fileName=${fileName}`
     )).data;
@@ -185,22 +221,24 @@ class App extends Component {
     await this.setState({ currentParamObj: null });
     await this.setState({
       currentFilePath: path,
-      currentContent: content.replace(/(?:\r\n|\r|\n)/g, "<br/>") || "",
+      currentRawTemplate: content,
+      currentTemplateContent: content.replace(/(?:\r\n|\r|\n)/g, "<br/>") || "",
       currentParamObj: params || {},
       currentResult: null
     });
-    console.log(this.state.currentFilePath);
   };
 
-  doQuery = async () => {
+  handleQuery = async () => {
     await this.setState({ currentParamObj: this.state.currentParamObj });
     const invocationUrl = `${config.serverBaseUrl}epicall`;
-    let callResult = (await axios.post(invocationUrl, {
+    let callResult = await axios.post(invocationUrl, {
       fileName: this.state.currentFilePath,
       params: this.state.currentParamObj
-    })).data;
+    });
+
     try {
-      await this.setState({ currentResult: callResult });
+      await this.setState({ currentResult: callResult.data });
+      await this.renderSql();
     } catch (err) {
       console.log(err);
     }
@@ -210,11 +248,23 @@ class App extends Component {
     return (
       <ParentItem
         name={this.state.fileTree.name}
+        classes={styles}
         path={this.state.fileTree.path}
         children={this.state.fileTree.children}
-        onClick={this.handleClick}
+        onClick={this.handleClickTemplateName}
       />
     );
+  };
+
+  renderSql = async () => {
+    if (this.state.currentParamObj && this.state.currentTemplateContent) {
+      await this.setState({
+        currentRenderedSql: Mustache.render(
+          this.state.currentRawTemplate,
+          this.state.currentParamObj
+        )
+      });
+    }
   };
 
   parseCurrentParamsToInputs = () => {
@@ -260,7 +310,8 @@ class App extends Component {
                                 await this.setState({
                                   currentParamObj: this.state.currentParamObj
                                 });
-                              }, 500);
+                                await this.renderSql();
+                              }, 200);
                             }}
                             onMouseLeave={event => {
                               if (this.timer) {
@@ -270,15 +321,21 @@ class App extends Component {
                               currentObj[key][index] = source.value;
                             }}
                           />
-                          <a href="#" onClick={async ()=>{
-                            if (this.timer) {
-                              clearTimeout(this.timer);
-                            }
-                            currentObj[key].splice(index, 1);
-                            await this.setState({
-                              currentParamObj: this.state.currentParamObj
-                            });
-                          }}>[x]</a>
+                          <a
+                            href="#"
+                            onClick={async () => {
+                              if (this.timer) {
+                                clearTimeout(this.timer);
+                              }
+                              currentObj[key].splice(index, 1);
+                              await this.setState({
+                                currentParamObj: this.state.currentParamObj
+                              });
+                              await this.renderSql();
+                            }}
+                          >
+                            [x]
+                          </a>
                         </li>
                       );
                     })}
@@ -291,7 +348,6 @@ class App extends Component {
                         await this.setState({
                           currentParamObj: this.state.currentParamObj
                         });
-                        console.log(this.state.currentParamObj);
                       }}
                     >
                       Add Item
@@ -326,7 +382,8 @@ class App extends Component {
                       await this.setState({
                         currentParamObj: this.state.currentParamObj
                       });
-                    }, 500);
+                      await this.renderSql();
+                    }, 200);
                   }}
                   onMouseLeave={event => {
                     if (this.timer) {
@@ -341,9 +398,7 @@ class App extends Component {
         }
       }
     }
-    console.log(this.state.currentParamObj);
 
-    console.log(jsxArray);
     return jsxArray;
   };
 
@@ -353,12 +408,12 @@ class App extends Component {
       <MuiThemeProvider theme={theme}>
         <Grid container spacing={24}>
           <Grid item xs={4}>
-            <div style={{ height: "900px", overflowY: "scroll" }}>
+            <div style={{ height: "800px", overflowY: "scroll" }}>
               <ParentItem
                 name={this.state.fileTree.name}
                 path={this.state.fileTree.path}
                 children={this.state.fileTree.children}
-                onClick={this.handleClick}
+                onClick={this.handleClickTemplateName}
               />
             </div>
           </Grid>
@@ -366,39 +421,42 @@ class App extends Component {
             <Grid item xs={12}>
               <Paper
                 className={classes.paper}
-                style={{ height: "10px", overflowY: "scroll" }}
               >
-                <span>
-                  {this.state.currentFilePath && (
+                {this.state.currentFilePath && (
+                  <div style={{whiteSpace:"nowrap"}}>
+                    <span>View </span>
                     <a
                       href={`https://github.com/glg-core/epiquery-templates/tree/master${
                         this.state.currentFilePath
                       }`}
                       target="_blank"
                     >
-                      View [{this.state.currentFilePath}] on github
+                      {this.state.currentFilePath}
                     </a>
-                  )}
-                </span>
+                    <span> on 
+                      <img src="https://assets-cdn.github.com/images/modules/logos_page/GitHub-Logo.png" style={{width:"80px"}}/>
+                    </span>
+                  </div>
+                )}
               </Paper>
               <Paper
                 className={classes.paper}
                 style={{ height: "500px", overflowY: "scroll" }}
               >
-                <span>{renderHTML(this.state.currentContent)}</span>
+                <span>{renderHTML(this.state.currentTemplateContent)}</span>
               </Paper>
             </Grid>
 
             <Grid item xs={12}>
               <Paper className={classes.paper}>
-                {this.parseCurrentParamsToInputs()}
+                <ul>{this.parseCurrentParamsToInputs()}</ul>
 
                 <Button
                   variant="contained"
                   color="primary"
                   className={classes.button}
                   onClick={async () => {
-                    await this.doQuery();
+                    await this.handleQuery();
                   }}
                 >
                   Submit
@@ -409,16 +467,30 @@ class App extends Component {
           <Grid item xs={4}>
             <Paper
               className={classes.paper}
-              style={{ height: "200px", overflowY: "scroll" }}
             >
-              <h2>Parameters</h2>
+              <span>
+                <h2>Parameters</h2>
+              </span>
               {this.state.currentParamObj && (
                 <JsonPanel JSONContent={this.state.currentParamObj} />
               )}
+              <span>
+                <CopyToClipboard
+                  text={this.state.currentRenderedSql}
+                  onCopy={async () => {
+                    await this.setState({ copied: true });
+                    console.log(this.state.currentRenderedSql);
+                  }}
+                >
+                  <button>Copy rendered SQL to clipboard</button>
+                </CopyToClipboard>
+                {this.state.copied && (
+                  <p style={{ fontColor: "red" }}>Copied!</p>
+                )}
+              </span>
             </Paper>
             <Paper
               className={classes.paper}
-              style={{ height: "800px", overflowY: "scroll" }}
             >
               <h2>Result</h2>
               {this.state.currentResult && (
