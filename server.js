@@ -89,9 +89,6 @@ app.post("/epicall", async (req, res, next) => {
   const fileName = req.body["fileName"];
   const params = req.body["params"];
 
-  console.log(`${config.epiQueryServer}${fileName}`);
-  console.log(params);
-
   try {
     const result = (await axios.post(
       `${config.epiQueryServer}${fileName}`,
