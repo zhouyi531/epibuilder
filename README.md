@@ -9,8 +9,8 @@ A typical `local.env` may look like this:
 ``` bash
 export NODE_ENV=development
 export PORT=8080
-export EPIQUERY_SERVER="http://localhost:9090/epiquery1/datahub"
 export TEMPLATE_DIRECTORY="/Users/austinzhou/Code/github/glg/epiquery-templates"
+export EPIQUERY_SERVER_CONN_STR_JSON='{"devdb":"http://localhost:9090/epiquery1/glglive","datahub":"http://localhost:9090/epiquery1/datahub"}'
 ```
 Then
 
@@ -18,6 +18,8 @@ Then
 npm start
 ```
 
+#### ver 1.1 2018-11-04
+1. Add multiple epiquery server support
 
 #### ver 1.0 2018-11-02
 
