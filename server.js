@@ -93,15 +93,11 @@ app.post("/epicall", async (req, res, next) => {
   const params = req.body["params"];
   const conn = req.body["conn"] || Object.keys(config.epiqueryServerConns)[0];
 
-  try {
-    console.log(`${config.epiqueryServerConns[conn]}${fileName}`);
-    
+  try {  
     const result = (await axios.post(
       `${config.epiqueryServerConns[conn]}${fileName}`,
       params
     ));
-
-    console.log(result);
 
     if (!result || !result.data) {
       throw new Error("no result");

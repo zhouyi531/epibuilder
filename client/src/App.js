@@ -441,7 +441,11 @@ class App extends Component {
             <Grid item xs={12}>
               <Paper
                 className={classes.paper}
-                style={{ height: "800px", overflowY: "scroll" }}
+                style={{
+                  height: "800px",
+                  overflowY: "scroll",
+                  overflowX: "hidden"
+                }}
               >
                 <ParentItem
                   name={this.state.fileTree.name}
