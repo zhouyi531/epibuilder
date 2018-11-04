@@ -15,8 +15,17 @@ export EPIQUERY_SERVER_CONN_STR_JSON='{"devdb":"http://localhost:9090/epiquery1/
 Then
 
 ``` bash
-npm start
+source local.env && npm start
 ```
+
+#### TODOs:
+1. Generate epiquery invocation js code.
+2. Add search function for file name
+3. Support multiple epiquery calls in orders
+4. Support functions applied to epiquery call results 
+
+
+### Update History
 
 #### ver 1.1 2018-11-04
 1. Add multiple epiquery server support
@@ -29,5 +38,3 @@ npm start
 4. Show current parameters in JSON format
 5. Render the SQL script by the template and current parameters
 6. Make epiquery call and show the results or errors
-
-
