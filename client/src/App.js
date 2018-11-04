@@ -15,6 +15,10 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 import Mustache from "mustache";
 import FolderIcon from "@material-ui/icons/FolderOutlined";
 import ListIcon from "@material-ui/icons/ListOutlined";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
+import _ from "lodash";
 
 const theme = createMuiTheme();
 
@@ -90,7 +94,6 @@ class ChildItem extends Component {
 
   render() {
     const { classes } = this.props;
-    console.log(classes);
     return (
       <div>
         {this.props.type === "directory" && (
@@ -114,6 +117,7 @@ class ChildItem extends Component {
               this.props.children.map(child => {
                 return (
                   <ul
+                    key={child.name}
                     className={
                       this.props.firstLayer
                         ? "submenuShown"
@@ -134,7 +138,7 @@ class ChildItem extends Component {
         )}
 
         {this.props.type === "file" && (
-          <li>
+          <li key={`li-${this.props.name}`}>
             <span style={{ verticalAlign: "baseline" }}>
               <ListIcon />
               <a
@@ -197,7 +201,8 @@ class App extends Component {
       currentRawTemplate: null,
       currentTemplateContent: null,
       currentParamObj: null,
-      currentResult: null
+      currentResult: null,
+      currentConn: ""
     };
     this.timer = null;
   }
@@ -207,7 +212,11 @@ class App extends Component {
       const fileTreeData = (await axios.get(
         `${config.serverBaseUrl}fileTreeData`
       )).data;
-      await this.setState({ fileTree: fileTreeData });
+      await this.setState({
+        fileTree: fileTreeData.fileTree,
+        epiConns: fileTreeData.epiqueryServerConns,
+        currentConn: Object.keys(fileTreeData.epiqueryServerConns)[0]
+      });
     } catch (err) {
       console.log("error in 'componentDidMount':", err);
     }
@@ -233,7 +242,8 @@ class App extends Component {
     const invocationUrl = `${config.serverBaseUrl}epicall`;
     let callResult = await axios.post(invocationUrl, {
       fileName: this.state.currentFilePath,
-      params: this.state.currentParamObj
+      params: this.state.currentParamObj,
+      conn: this.state.currentConn
     });
 
     try {
@@ -265,6 +275,10 @@ class App extends Component {
         )
       });
     }
+  };
+
+  handleChangeConn = async event => {
+    await this.setState({ currentConn: event.target.value });
   };
 
   parseCurrentParamsToInputs = () => {
@@ -408,22 +422,41 @@ class App extends Component {
       <MuiThemeProvider theme={theme}>
         <Grid container spacing={24}>
           <Grid item xs={4}>
-            <div style={{ height: "800px", overflowY: "scroll" }}>
-              <ParentItem
-                name={this.state.fileTree.name}
-                path={this.state.fileTree.path}
-                children={this.state.fileTree.children}
-                onClick={this.handleClickTemplateName}
-              />
-            </div>
-          </Grid>
-          <Grid item xs={4}>
+            <Grid item xs={12}>
+              <Paper className={classes.paper}>
+                <Select
+                  value={this.state.currentConn}
+                  onChange={this.handleChangeConn}
+                >
+                  {this.state.epiConns &&
+                    Object.keys(this.state.epiConns).map(key => {
+                      return <MenuItem value={key}>{key}</MenuItem>;
+                    })}
+                </Select>
+                {this.state.epiConns && (
+                  <span>{this.state.epiConns[this.state.currentConn]}</span>
+                )}
+              </Paper>
+            </Grid>
             <Grid item xs={12}>
               <Paper
                 className={classes.paper}
+                style={{ height: "800px", overflowY: "scroll" }}
               >
+                <ParentItem
+                  name={this.state.fileTree.name}
+                  path={this.state.fileTree.path}
+                  children={this.state.fileTree.children}
+                  onClick={this.handleClickTemplateName}
+                />
+              </Paper>
+            </Grid>
+          </Grid>
+          <Grid item xs={4}>
+            <Grid item xs={12}>
+              <Paper className={classes.paper}>
                 {this.state.currentFilePath && (
-                  <div style={{whiteSpace:"nowrap"}}>
+                  <div style={{ whiteSpace: "nowrap" }}>
                     <span>View </span>
                     <a
                       href={`https://github.com/glg-core/epiquery-templates/tree/master${
@@ -433,8 +466,13 @@ class App extends Component {
                     >
                       {this.state.currentFilePath}
                     </a>
-                    <span> on 
-                      <img src="https://assets-cdn.github.com/images/modules/logos_page/GitHub-Logo.png" style={{width:"80px"}}/>
+                    <span>
+                      {" "}
+                      on
+                      <img
+                        src="https://assets-cdn.github.com/images/modules/logos_page/GitHub-Logo.png"
+                        style={{ width: "80px" }}
+                      />
                     </span>
                   </div>
                 )}
@@ -465,9 +503,7 @@ class App extends Component {
             </Grid>
           </Grid>
           <Grid item xs={4}>
-            <Paper
-              className={classes.paper}
-            >
+            <Paper className={classes.paper}>
               <span>
                 <h2>Parameters</h2>
               </span>
@@ -489,9 +525,7 @@ class App extends Component {
                 )}
               </span>
             </Paper>
-            <Paper
-              className={classes.paper}
-            >
+            <Paper className={classes.paper}>
               <h2>Result</h2>
               {this.state.currentResult && (
                 <JsonPanel JSONContent={this.state.currentResult} />

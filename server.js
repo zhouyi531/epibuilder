@@ -56,7 +56,10 @@ app.get("/diagnostic", (req, res) => {
 });
 
 app.get("/fileTreeData", (req, res) => {
-  res.status(200).json(app.get("fileTree"));
+  res.status(200).json({
+    fileTree: app.get("fileTree"),
+    epiqueryServerConns: config.epiqueryServerConns
+  });
   return;
 });
 
@@ -88,20 +91,25 @@ app.get("/fileContent", async (req, res) => {
 app.post("/epicall", async (req, res, next) => {
   const fileName = req.body["fileName"];
   const params = req.body["params"];
+  const conn = req.body["conn"] || Object.keys(config.epiqueryServerConns)[0];
 
   try {
+    console.log(`${config.epiqueryServerConns[conn]}${fileName}`);
+    
     const result = (await axios.post(
-      `${config.epiQueryServer}${fileName}`,
+      `${config.epiqueryServerConns[conn]}${fileName}`,
       params
-    )).data;
-    if (!result) {
+    ));
+
+    console.log(result);
+
+    if (!result || !result.data) {
       throw new Error("no result");
     }
-    res.status(200).send(result);
+    res.status(200).send(result.data);
   } catch (err) {
-    if (err) {
-      next(err);
-    }
+    console.log(err.body);
+    next(err);
   }
 });
 

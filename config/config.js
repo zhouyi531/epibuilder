@@ -16,5 +16,11 @@ module.exports = {
     process.env.EPIQUERY_SERVER || "http://127.0.0.1:9090/epiquery1/datahub",
   localEpiTemplateFolder:
     process.env.TEMPLATE_DIRECTORY ||
-    "/Users/austinzhou/Code/github/glg/epiquery-templates"
+    "/Users/austinzhou/Code/github/glg/epiquery-templates",
+  epiqueryServerConns: JSON.parse(
+    process.env.EPIQUERY_SERVER_CONN_STR_JSON
+  ) || {
+    glglive: "http://localhost:9090/epiquery1/glglive",
+    datahub: "http://localhost:9090/epiquery1/datahub"
+  }
 };
