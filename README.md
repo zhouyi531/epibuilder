@@ -1,3 +1,9 @@
+## A tool for buidling/testing/verifying epiquery
+
+### Demo
+
+http://austinzhou.dev.glgresearch.com/epibuilder
+
 ### Epi Builder
 
 All configurations are stored in `{projectRoot}/config/config.js`
