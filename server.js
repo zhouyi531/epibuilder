@@ -45,11 +45,6 @@ app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x
 
 require("./routes")(app);
 
-const tree = epiTemplatesLoader.loadTree();
-
-//app.set("fileTree", result);
-app.set("fileTree", tree);
-
 app.get("/diagnostic", (req, res) => {
   res.status(200).json({ status: "ok" });
   return;
@@ -57,7 +52,7 @@ app.get("/diagnostic", (req, res) => {
 
 app.get("/fileTreeData", (req, res) => {
   res.status(200).json({
-    fileTree: app.get("fileTree"),
+    fileTree: epiTemplatesLoader.loadTree(),
     epiqueryServerConns: config.epiqueryServerConns
   });
   return;
@@ -93,11 +88,11 @@ app.post("/epicall", async (req, res, next) => {
   const params = req.body["params"];
   const conn = req.body["conn"] || Object.keys(config.epiqueryServerConns)[0];
 
-  try {  
-    const result = (await axios.post(
+  try {
+    const result = await axios.post(
       `${config.epiqueryServerConns[conn]}${fileName}`,
       params
-    ));
+    );
 
     if (!result || !result.data) {
       throw new Error("no result");
